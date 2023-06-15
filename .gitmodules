@@ -9,3 +9,7 @@
 [submodule "plugins/ranger-archives"]
 	path = plugins/ranger-archives
 	url = https://github.com/maximtrp/ranger-archives
+
+[submodule "plugins/ranger-fzf-filter"]
+	path = plugins/ranger-fzf-filter
+	url = https://github.com/MuXiu1997/ranger-fzf-filter
