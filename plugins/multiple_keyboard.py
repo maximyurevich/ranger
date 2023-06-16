@@ -11,44 +11,60 @@
 #  To use it you need to fill in the other_keys_mm.
 #  ----------------------------------------------------------------------
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
+
 import ranger.api
+
 HOOK_READY_OLD = ranger.api.hook_init
 
-other_keys    = "фисвуапршолдьтщзйкыіегмцчнябюхъїжэєё'" + 'ФИСВУАПРШОЛДЬТЩЗЙКЫІЕГМЦЧНЯБЮХЪЇЖЭЄЁʼ' + '№'
-en_keys       = "abcdefghijklmnopqrsstuvwxyz,.[]];''``" + 'ABCDEFGHIJKLMNOPQRSSTUVWXYZ<>{}}:""~ʼ' + '#' \
-                '@$^?/?'
-other_keys_mm = '";:&.,'
+other_keys = (
+    "фисвуапршолдьтщзйкыіегмцчнябюхъїжэєё'"
+    + "ФИСВУАПРШОЛДЬТЩЗЙКЫІЕГМЦЧНЯБЮХЪЇЖЭЄЁʼ"
+    + "№"
+)
+en_keys = (
+    "abcdefghijklmnopqrsstuvwxyz,.[]];''``"
+    + 'ABCDEFGHIJKLMNOPQRSSTUVWXYZ<>{}}:""~ʼ'
+    + "#@$^?/?"
+)
+other_keys_mm = '";&.,'
 
+import curses
 import os
 import sys
-import curses
 
 from ranger.ext.keybinding_parser import ALT_KEY
+
 
 def hook_ready(fm):
     try:
         import ranger.core.keyboard
     except ImportError:
         import ranger.gui.ui as ui
+
         ui.UI.handle_input = handle_input
     return HOOK_READY_OLD(fm)
+
 
 def handle_input(self):
     def _key_is_merge_getter(ch):  # Handle keys S-[ 0-9]
         i = len(other_keys) + other_keys_mm.index(ch)
-        if i < len(en_keys): return ord(en_keys[i])
+        if i < len(en_keys):
+            return ord(en_keys[i])
         return -1
 
-    def key_translate(keys, cv=not self.console.visible):  # translate key from other_keys into en_keys
+    def key_translate(
+        keys, cv=not self.console.visible
+    ):  # translate key from other_keys into en_keys
         if cv or self.console.question_queue:
             a = []
             for i in keys:
-                s = '{0:X}'.format(i)
-                if len(s)%2!=0: s = '0' + s
+                s = "{0:X}".format(i)
+                if len(s) % 2 != 0:
+                    s = "0" + s
                 a.append(bytes.fromhex(s))
             try:
-                ch = b''.join(a).decode('utf-8')
+                ch = b"".join(a).decode("utf-8")
             except UnicodeDecodeError:
                 return []
             if ch in other_keys:
@@ -72,21 +88,26 @@ def handle_input(self):
             self.fm.exit()  # STDIN has been closed
 
     keys = self.win.getch()
-    if keys == 27 or (keys >= 128 and keys < 256):  # Handle special keys like ALT+X or unicode here
+    if keys == 27 or (
+        keys >= 128 and keys < 256
+    ):  # Handle special keys like ALT+X or unicode here
         keys = [keys]
         previous_load_mode = self.load_mode
         self.set_load_mode(True)
         for _ in range(4):
             getkey = self.win.getch()
-            if getkey != -1: keys.append(getkey)
+            if getkey != -1:
+                keys.append(getkey)
         tkeys = key_translate(keys)
-        if tkeys: return simple_key(tkeys[0])
+        if tkeys:
+            return simple_key(tkeys[0])
         if len(keys) == 1:
             keys.append(-1)
         elif keys[0] == 27:
             keys[0] = ALT_KEY
             tkeys = key_translate(keys[1:], True)
-            if tkeys: keys = keys[0:1] + tkeys
+            if tkeys:
+                keys = keys[0:1] + tkeys
         if self.settings.xterm_alt_key:
             if len(keys) == 2 and keys[1] in range(127, 256):
                 if keys[0] == 195:
@@ -99,5 +120,6 @@ def handle_input(self):
             curses.flushinp()
     else:
         simple_key(keys)
+
 
 ranger.api.hook_ready = hook_ready
